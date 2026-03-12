@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { upsertReview, deleteReview } from '../../../lib/db/reviews';
 import { Review } from '../../../types';
 
@@ -67,6 +68,10 @@ export async function POST(req: NextRequest) {
 
     await upsertReview(slug, reviewData);
 
+    // Revalidate the homepage and the specific review page
+    revalidatePath('/');
+    revalidatePath(`/review/${slug}`);
+
     return NextResponse.json({ success: true, slug }, { status: 200 });
   } catch (error) {
     console.error('Error processing POST /api/push:', error);
@@ -95,6 +100,10 @@ export async function DELETE(req: NextRequest) {
     if (!deleted) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
+
+    // Revalidate the homepage and the specific review page
+    revalidatePath('/');
+    revalidatePath(`/review/${slug}`);
 
     return NextResponse.json({ deleted: true, slug }, { status: 200 });
   } catch (error) {
