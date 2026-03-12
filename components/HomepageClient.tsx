@@ -57,9 +57,10 @@ export default function HomepageClient({ initialReviews }: { initialReviews: Rev
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-accent/40 bg-accent/10">
-            <span className="text-accent text-[11px] font-bold uppercase tracking-widest font-heading">
-              🇬🇧 UK-Focused &middot; Updated Regularly
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full border border-[#2d8a6b]/30 bg-[#e8f4f0] shadow-sm">
+            <span className="text-xl leading-none">🇬🇧</span>
+            <span className="text-[#2d8a6b] text-[12px] font-bold uppercase tracking-widest font-heading">
+              100% UK-Focused &middot; Updated Regularly
             </span>
           </div>
           

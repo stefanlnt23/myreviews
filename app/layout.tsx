@@ -37,10 +37,11 @@ export default function RootLayout({
       <body className={`${barlow.variable} ${barlowCondensed.variable} ${lora.variable} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground`}>
         <nav className="border-b-[1.5px] border-[#e8e4de] bg-white sticky top-0 z-50 h-[58px] flex items-center shadow-sm">
           <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="text-2xl font-black tracking-tight text-[#111] font-heading hover:text-accent transition-colors">
+            <Link href="/" className="flex items-center gap-2 group relative">
+              <span className="text-2xl font-black tracking-tight text-[#111] font-heading hover:text-accent transition-colors flex items-center">
                 <span className="text-accent text-xl mr-1 inline-block group-hover:rotate-12 transition-transform">🔧</span>
                 SoleToolkit
+                <span className="ml-2 text-xl" title="UK Only" aria-label="United Kingdom">🇬🇧</span>
               </span>
             </Link>
             <div className="flex items-center">
