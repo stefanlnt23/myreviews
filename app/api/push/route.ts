@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     // Remove undefined values to prevent Firestore errors
     const reviewData = Object.fromEntries(
       Object.entries(rawReviewData).filter(([, v]) => v !== undefined)
-    ) as Review;
+    ) as unknown as Review;
 
     await upsertReview(slug, reviewData);
 
