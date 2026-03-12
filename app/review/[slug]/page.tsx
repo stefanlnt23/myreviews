@@ -143,7 +143,7 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
               {review.images.map((img, i) => (
                 <img 
                   key={i} 
-                  src={img} 
+                  src={`/api/image-proxy?url=${encodeURIComponent(img)}`}
                   alt={`${review.productName} screenshot ${i + 1}`} 
                   className="h-64 md:h-80 w-auto rounded-[16px] border-[1.5px] border-[#e8e4de] object-cover snap-center bg-white shadow-md p-1"
                   loading="lazy"
