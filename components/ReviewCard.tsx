@@ -58,15 +58,16 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <p className="italic text-gray-400 text-sm line-clamp-1 mb-4">
           &quot;{review.summary}&quot;
         </p>
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            window.open(review.affiliateLink, '_blank', 'noopener,noreferrer,nofollow');
-          }}
-          className="w-full py-3 bg-accent hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors text-center inline-block"
-        >
-          Get Deal &rarr;
-        </button>
+        <object data="" type="text/html" className="w-full">
+          <a 
+            href={review.affiliateLink}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="w-full py-3 bg-accent hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors text-center inline-block"
+          >
+            Get Deal &rarr;
+          </a>
+        </object>
       </div>
     </Link>
   );
