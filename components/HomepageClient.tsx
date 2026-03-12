@@ -51,55 +51,73 @@ export default function HomepageClient({ initialReviews }: { initialReviews: Rev
   const getCategoryCount = (cat: string) => initialReviews.filter(r => r.category === cat).length;
 
   return (
-    <div className="pb-20">
-      {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#2d1a0a] pt-24 pb-32">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+    <div className="pb-20 mt-[-58px]">
+      {/* 1. HERO SECTION WITH IMAGE & CURVED CUT */}
+      <section className="relative overflow-hidden pt-[160px] pb-[220px]">
+        {/* Background Image & Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+          style={{ 
+            backgroundImage: "url('https://images.unsplash.com/photo-1541888086225-b1a9c80d859b?w=2000&q=80')",
+            backgroundPosition: "center 30%"
+          }}
+        />
+        {/* Darkening Gradients for readability */}
+        <div className="absolute inset-0 z-0 bg-[#1a1a1a]/60" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#1a1a1a]/90 via-[#1a1a1a]/40 to-black/20" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-accent/30 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none z-0" />
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full border border-[#2d8a6b]/30 bg-[#e8f4f0] shadow-sm">
-            <span className="text-xl leading-none">🇬🇧</span>
-            <span className="text-[#2d8a6b] text-[12px] font-bold uppercase tracking-widest font-heading">
+        {/* Curved Bottom Cut Generator (SVG clip-path via SVG) */}
+        <div className="absolute bottom-[-2px] left-0 w-full overflow-hidden leading-none z-10 rotate-180">
+          <svg className="relative block w-[calc(110%+1.3px)] h-[80px] md:h-[120px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-[#faf8f5]"></path>
+          </svg>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-accent/40 bg-accent/20 shadow-[0_0_20px_rgba(230,92,0,0.15)] backdrop-blur-sm">
+            <span className="text-xl leading-none" title="UK Only" aria-label="United Kingdom">🇬🇧</span>
+            <span className="text-white text-[12px] font-bold uppercase tracking-widest font-heading drop-shadow-sm">
               100% UK-Focused &middot; Updated Regularly
             </span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-normal text-white font-heading mb-6 drop-shadow-lg">
+          <h1 className="text-5xl md:text-7xl lg:text-[80px] font-extrabold tracking-normal text-white font-heading mb-6 drop-shadow-xl leading-tight">
             The best tools for <span className="text-accent italic font-normal px-2">UK sole traders.</span> Ranked.
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-300 font-serif italic max-w-2xl mx-auto mb-10 opacity-90">
-            Independent, brutally honest reviews of the software you actually need to run your business.
+          <p className="text-xl md:text-[22px] text-gray-200 font-serif italic max-w-3xl mx-auto mb-12 drop-shadow-md leading-relaxed">
+            Independent, brutally honest reviews of the software you actually need to run your business. Tested by real tradespeople.
           </p>
           
           <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
-            <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-heading shadow-xl backdrop-blur-md transition-transform hover:-translate-y-1">
-              <div className="p-2 bg-accent/20 rounded-lg text-accent">
-                <Database className="w-6 h-6" />
+            <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-black/40 border border-white/20 text-white font-heading shadow-2xl backdrop-blur-md transition-transform hover:-translate-y-1">
+              <div className="p-2.5 bg-accent/20 rounded-xl text-accent border border-accent/20">
+                <Database className="w-6 h-6 animate-pulse" />
               </div>
               <div className="flex flex-col text-left">
                 <span className="font-extrabold text-white text-xl leading-none">{initialReviews.length} Tools</span>
-                <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-1">Reviewed</span>
+                <span className="text-gray-300 text-[10px] uppercase tracking-widest font-bold mt-1.5">Reviewed</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-heading shadow-xl backdrop-blur-md transition-transform hover:-translate-y-1">
-              <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+            <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-black/40 border border-white/20 text-white font-heading shadow-2xl backdrop-blur-md transition-transform hover:-translate-y-1">
+              <div className="p-2.5 bg-blue-500/20 rounded-xl text-blue-400 border border-blue-500/20">
                 <LayoutGrid className="w-6 h-6" />
               </div>
               <div className="flex flex-col text-left">
                 <span className="font-extrabold text-white text-xl leading-none">{Object.keys(CATEGORY_MAP).length} Cats</span>
-                <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-1">Covered</span>
+                <span className="text-gray-300 text-[10px] uppercase tracking-widest font-bold mt-1.5">Covered</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-heading shadow-xl backdrop-blur-md transition-transform hover:-translate-y-1">
-              <div className="p-2 bg-red-500/20 rounded-lg text-red-400">
+            <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-black/40 border border-white/20 text-white font-heading shadow-2xl backdrop-blur-md transition-transform hover:-translate-y-1">
+              <div className="p-2.5 bg-red-500/20 rounded-xl text-red-400 border border-red-500/20">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div className="flex flex-col text-left">
                 <span className="font-extrabold text-white text-xl leading-none">Apr &apos;26</span>
-                <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-1">MTD Deadline</span>
+                <span className="text-gray-300 text-[10px] uppercase tracking-widest font-bold mt-1.5">MTD Deadline</span>
               </div>
             </div>
           </div>

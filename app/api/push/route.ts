@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare full payload
-    // Prepare full payload
     const rawReviewData: Partial<Review> = {
       productName,
       slug,
@@ -79,7 +78,7 @@ export async function POST(req: NextRequest) {
     // Remove undefined values to prevent Firestore errors
     const reviewData = Object.fromEntries(
       Object.entries(rawReviewData).filter(([, v]) => v !== undefined)
-    ) as unknown as Review;
+    ) as Partial<Review> as Review;
 
     await upsertReview(slug, reviewData);
 
