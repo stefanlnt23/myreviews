@@ -64,6 +64,12 @@ export async function POST(req: NextRequest) {
       expertName: body.expertName,
       expertTitle: body.expertTitle,
       dateUpdated: body.dateUpdated,
+      images: body.images,
+      youtubeTitle: body.youtubeTitle,
+      expertQuote: body.expertQuote,
+      faqItems: body.faqItems,
+      alternatives: body.alternatives,
+      lastTestedVersion: body.lastTestedVersion,
     };
 
     await upsertReview(slug, reviewData);

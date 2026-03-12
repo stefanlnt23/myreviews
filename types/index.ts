@@ -21,4 +21,10 @@ export interface Review {
   expertName?: string;
   expertTitle?: string;
   dateUpdated?: string;
+  images?: string[];
+  youtubeTitle?: string;
+  expertQuote?: string;
+  faqItems?: { question: string; answer: string }[];
+  alternatives?: { name: string; reason: string }[];
+  lastTestedVersion?: string;
 }
