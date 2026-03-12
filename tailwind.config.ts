@@ -9,16 +9,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0F0F0F",
-        card: "#1A1A1A",
-        border: "#2A2A2A",
-        foreground: "#F5F5F5",
-        accent: "#F97316",
+        background: "#faf8f5",
+        card: "#ffffff",
+        border: "#e8e4de",
+        foreground: "#111111", // Dark text for light bg
+        accent: "#e65c00",
         score: {
-          green: "#22C55E",
-          amber: "#EAB308",
-          red: "#EF4444"
+          green: "#2d8a6b",
+          amber: "#d4720a",
+          grey: "#888888"
+        },
+        category: {
+          accounting: { bg: "#e8f4f0", text: "#2d8a6b" },
+          invoicing: { bg: "#fef3e8", text: "#d4720a" },
+          website: { bg: "#eef2fb", text: "#3a5fd9" },
+          payments: { bg: "#fdf0f0", text: "#c0392b" },
+          jobs: { bg: "#f5f0fe", text: "#7c3aed" },
+          insurance: { bg: "#f0f9ff", text: "#0284c7" },
         }
+      },
+      fontFamily: {
+        sans: ['var(--font-barlow)', 'sans-serif'],
+        heading: ['var(--font-barlow-condensed)', 'sans-serif'],
+        serif: ['var(--font-lora)', 'serif'],
       },
     },
   },

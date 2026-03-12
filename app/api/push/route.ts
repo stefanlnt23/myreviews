@@ -70,6 +70,9 @@ export async function POST(req: NextRequest) {
       faqItems: body.faqItems,
       alternatives: body.alternatives,
       lastTestedVersion: body.lastTestedVersion,
+      tagline: body.tagline,
+      badge: body.badge,
+      isNew: body.isNew ?? false,
     };
 
     await upsertReview(slug, reviewData);

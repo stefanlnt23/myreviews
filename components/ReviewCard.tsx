@@ -8,66 +8,72 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ review }: ReviewCardProps) {
+  // 5 dot logic
+  const dots = Array.from({ length: 5 }).map((_, i) => i < Math.round(review.score / 2));
+
   return (
     <Link 
       href={`/review/${review.slug}`}
-      className="group flex flex-col bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-colors h-full"
+      className="group relative flex flex-col bg-white rounded-[16px] border-[1.5px] border-[#e8e4de] hover:border-[#c8b89a] p-[20px] px-[22px] transition-all duration-300 hover:-translate-y-[3px] hover:shadow-lg h-full"
     >
-      <div className="flex justify-between items-start mb-4">
-        <span className={cn("px-3 py-1 rounded-full text-xs font-semibold border", getCategoryStyles(review.category))}>
-          {review.category}
+      {review.badge && (
+        <span className="absolute -top-3 -right-3 bg-[#111] text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider font-heading shadow-md">
+          {review.badge}
         </span>
-        {review.mtdReady ? (
-          <span className="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full text-xs font-semibold">
-            MTD Ready
-          </span>
-        ) : (
-          <span className="px-3 py-1 bg-gray-500/10 text-gray-400 border border-gray-500/20 rounded-full text-xs font-semibold">
-            Not MTD
-          </span>
-        )}
-      </div>
+      )}
 
-      <div className="flex gap-4 items-start mb-6">
-        <div className={cn("flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl text-white", getScoreColor(review.score))}>
+      <div className="flex gap-4 items-start mb-4">
+        <div className={cn("flex-shrink-0 w-[52px] h-[52px] rounded-[12px] flex items-center justify-center font-heading font-bold text-2xl shadow-sm", getScoreColor(review.score))}>
           {review.score}
         </div>
-        <div>
-          <h2 className="text-2xl font-bold group-hover:text-accent transition-colors">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className={cn("px-2.5 py-0.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wide", getCategoryStyles(review.category))}>
+              {review.category.replace('_', ' ')}
+            </span>
+            {review.mtdReady ? (
+              <span className="px-2 py-0.5 rounded-[20px] text-[10px] font-bold uppercase tracking-wide bg-[#e8f4f0] text-[#2d8a6b]">
+                MTD Ready
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-[20px] text-[10px] font-bold uppercase tracking-wide bg-gray-100 text-gray-500">
+                Not MTD
+              </span>
+            )}
+          </div>
+          <h2 className="font-heading font-bold text-[22px] leading-tight text-[#111] group-hover:text-accent transition-colors">
             {review.productName}
           </h2>
         </div>
       </div>
 
-      <div className="flex-1 space-y-4">
-        {(review.pros || []).slice(0, 3).map((pro, i) => (
-          <div key={i} className="flex gap-2 items-start text-sm text-gray-300">
-            <Check className="w-5 h-5 text-green-500 shrink-0" />
-            <span>{pro}</span>
+      <div className="flex-1">
+        <p className="font-serif italic text-[13.5px] text-gray-500 leading-relaxed mb-4">
+          &ldquo;{review.tagline || review.summary}&rdquo;
+        </p>
+        
+        {review.pros && review.pros.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {review.pros.slice(0, 2).map((pro, i) => (
+              <div key={i} className="flex items-center gap-1.5 bg-[#e8f4f0] text-[#2d8a6b] px-2.5 py-1 rounded-md text-[12px] font-medium leading-tight max-w-full">
+                <Check className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{pro}</span>
+              </div>
+            ))}
           </div>
-        ))}
-        {(review.cons || []).slice(0, 2).map((con, i) => (
-          <div key={i} className="flex gap-2 items-start text-sm text-gray-300">
-            <X className="w-5 h-5 text-red-500 shrink-0" />
-            <span>{con}</span>
-          </div>
-        ))}
+        )}
       </div>
 
-      <div className="mt-6">
-        <p className="italic text-gray-400 text-sm line-clamp-1 mb-4">
-          &quot;{review.summary}&quot;
-        </p>
-        <object data="" type="text/html" className="w-full">
-          <a 
-            href={review.affiliateLink}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="w-full py-3 bg-accent hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors text-center inline-block"
-          >
-            Get Deal &rarr;
-          </a>
-        </object>
+      <div className="mt-4 pt-4 border-t border-[#e8e4de] flex items-center justify-between">
+        <span className="text-accent font-heading font-bold text-[14px]">
+          Read full review &rarr;
+        </span>
+        <div className="flex items-baseline gap-1 bg-[#1a1a1a] px-4 py-2 rounded-[10px] shadow-sm">
+          <span className={cn("font-heading font-extrabold text-[20px] leading-none", getScoreColor(review.score))}>
+            {review.score}
+          </span>
+          <span className="font-serif italic text-gray-400 text-[13px] leading-none">/ 10</span>
+        </div>
       </div>
     </Link>
   );

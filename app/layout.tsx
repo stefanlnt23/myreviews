@@ -1,13 +1,25 @@
 import type { Metadata } from 'next';
-import { Barlow } from 'next/font/google';
+import { Barlow, Barlow_Condensed, Lora } from 'next/font/google';
 import './globals.css';
 import Link from 'next/link';
-import { Wrench } from 'lucide-react';
 
 const barlow = Barlow({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600'],
   variable: '--font-barlow',
+});
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-barlow-condensed',
+});
+
+const lora = Lora({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-lora',
 });
 
 export const metadata: Metadata = {
@@ -21,17 +33,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${barlow.variable} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground`}>
-        <nav className="border-b border-border bg-card sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <html lang="en">
+      <body className={`${barlow.variable} ${barlowCondensed.variable} ${lora.variable} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground`}>
+        <nav className="border-b-[1.5px] border-[#e8e4de] bg-white sticky top-0 z-50 h-[58px] flex items-center shadow-sm">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 group">
-              <Wrench className="w-6 h-6 text-accent group-hover:rotate-12 transition-transform" />
-              <span className="text-xl font-bold tracking-tight">SoleToolkit</span>
+              <span className="text-2xl font-black tracking-tight text-[#111] font-heading hover:text-accent transition-colors">
+                <span className="text-accent text-xl mr-1 inline-block group-hover:rotate-12 transition-transform">🔧</span>
+                SoleToolkit
+              </span>
             </Link>
             <div className="flex items-center">
-              {/* Optional dark mode toggle could go here; explicitly leaving out complex interactive logic since default is hard dark mode */}
-              <span className="text-sm text-gray-400 hidden sm:inline-block">The UK&apos;s best tools, ranked.</span>
+              <span className="text-[13px] text-gray-500 font-sans hidden sm:inline-block">The UK&apos;s best tools, ranked.</span>
             </div>
           </div>
         </nav>
@@ -40,16 +53,16 @@ export default function RootLayout({
           {children}
         </main>
 
-        <footer className="border-t border-border bg-card py-12 mt-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-400">
-            <p className="max-w-xl text-center md:text-left">
+        <footer className="bg-white border-t-[1.5px] border-[#e8e4de] py-10 mt-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="max-w-xl text-center md:text-left text-[12px] text-gray-500 font-sans">
               SoleToolkit is reader-supported. We may earn a commission when you click links on our site. This never affects our editorial independence.
             </p>
-            <div className="flex gap-6">
-              <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">About</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Contact</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Disclosure Policy</Link>
+            <div className="flex flex-wrap justify-center gap-6 text-[13px] font-semibold font-heading text-gray-500 tracking-wide uppercase">
+              <Link href="/" className="hover:text-[#111] transition-colors">Home</Link>
+              <Link href="#" className="hover:text-[#111] transition-colors">About</Link>
+              <Link href="#" className="hover:text-[#111] transition-colors">Contact</Link>
+              <Link href="#" className="hover:text-[#111] transition-colors">Disclosure Policy</Link>
             </div>
           </div>
         </footer>

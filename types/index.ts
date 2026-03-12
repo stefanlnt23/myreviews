@@ -27,4 +27,7 @@ export interface Review {
   faqItems?: { question: string; answer: string }[];
   alternatives?: { name: string; reason: string }[];
   lastTestedVersion?: string;
+  tagline?: string;
+  badge?: string;
+  isNew?: boolean;
 }

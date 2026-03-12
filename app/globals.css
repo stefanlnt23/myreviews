@@ -2,7 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: theme('colors.background');
-  color: theme('colors.foreground');
+@layer base {
+  body {
+    background-color: theme('colors.background');
+    color: theme('colors.foreground');
+  }
+
+  ::selection {
+    background-color: theme('colors.accent');
+    color: #fff;
+  }
 }
