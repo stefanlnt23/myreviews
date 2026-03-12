@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Check, X, ArrowLeft } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getReviewBySlug, getSimilarReviews } from '../../../lib/db/reviews';
 import { getScoreColor, getCategoryStyles, cn } from '../../../lib/utils';
@@ -147,6 +147,7 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
                   alt={`${review.productName} screenshot ${i + 1}`} 
                   className="h-64 md:h-80 w-auto rounded-[16px] border-[1.5px] border-[#e8e4de] object-cover snap-center bg-white shadow-md p-1"
                   loading="lazy"
+                  /* eslint-disable-next-line @next/next/no-img-element */
                 />
               ))}
             </div>

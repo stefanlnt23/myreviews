@@ -97,7 +97,7 @@ export default function HomepageClient({ initialReviews }: { initialReviews: Rev
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-extrabold text-white text-xl leading-none">Apr '26</span>
+                <span className="font-extrabold text-white text-xl leading-none">Apr &apos;26</span>
                 <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-1">MTD Deadline</span>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function HomepageClient({ initialReviews }: { initialReviews: Rev
                   )}
 
                   <p className="text-lg text-gray-300 font-serif italic mb-6">
-                    By April 2026, all sole traders earning over £50k must keep digital records and use MTD-compatible software. Don't wait until the last minute.
+                    By April 2026, all sole traders earning over £50k must keep digital records and use MTD-compatible software. Don&apos;t wait until the last minute.
                   </p>
                 </div>
                 

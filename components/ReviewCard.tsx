@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Review } from '../types';
 import { getScoreColor, getCategoryStyles, cn } from '../lib/utils';
 
@@ -8,8 +8,6 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ review }: ReviewCardProps) {
-  // 5 dot logic
-  const dots = Array.from({ length: 5 }).map((_, i) => i < Math.round(review.score / 2));
 
   return (
     <Link 
