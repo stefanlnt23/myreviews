@@ -10,28 +10,47 @@ import ReviewCard from '../../../components/ReviewCard';
 export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const review = await getReviewBySlug(params.slug);
-  
-  if (!review) return { title: 'Not Found | SoleToolkit' };
+  try {
+    const review = await getReviewBySlug(params.slug);
 
-  return {
-    title: `${review.productName} Review 2026 | SoleToolkit`,
-    description: review.summary,
-    openGraph: {
-      title: `${review.productName} Review | SoleToolkit`,
+    if (!review) return { title: 'Not Found | SoleToolkit' };
+
+    return {
+      title: `${review.productName} Review 2026 | SoleToolkit`,
       description: review.summary,
-    }
-  };
+      openGraph: {
+        title: `${review.productName} Review | SoleToolkit`,
+        description: review.summary,
+      }
+    };
+  } catch (error) {
+    console.error('Failed to generate review metadata', error);
+    return {
+      title: 'Review | SoleToolkit',
+      description: 'Practical UK business software reviews.',
+    };
+  }
 }
 
 export default async function ReviewPage({ params }: { params: { slug: string } }) {
-  const review = await getReviewBySlug(params.slug);
+  let review: Awaited<ReturnType<typeof getReviewBySlug>>;
+  try {
+    review = await getReviewBySlug(params.slug);
+  } catch (error) {
+    console.error('Failed to load review page data', error);
+    notFound();
+  }
 
   if (!review) {
     notFound();
   }
 
-  const similarReviews = await getSimilarReviews(review.category, review.slug);
+  let similarReviews: Awaited<ReturnType<typeof getSimilarReviews>> = [];
+  try {
+    similarReviews = await getSimilarReviews(review.category, review.slug);
+  } catch (error) {
+    console.error('Failed to load similar reviews', error);
+  }
 
   const verdict = review.verdict || (review.score >= 8 ? 'YES' : review.score >= 6 ? 'MAYBE' : 'NO');
   const verdictText = verdict === 'YES' ? 'Yes, worth it' : verdict === 'MAYBE' ? 'Maybe, depends on your setup' : 'No, skip for most trades';
