@@ -37,27 +37,38 @@ function normalizeImages(value: unknown): (string | ReviewImage)[] | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function normalizeCategory(value: unknown): Review['category'] | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+
+  const normalized = value
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, ' ');
+
+  const aliases: Record<string, Review['category']> = {
+    ACCOUNTING: 'ACCOUNTING',
+    INVOICING: 'INVOICING',
+    'WEBSITE BUILDER': 'WEBSITE BUILDER',
+    PAYMENTS: 'PAYMENTS',
+    'JOB MANAGEMENT': 'JOB MANAGEMENT',
+    INSURANCE: 'INSURANCE',
+  };
+
+  return aliases[normalized] ?? null;
+}
+
 function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } | { ok: false; error: string } {
   if (!body || typeof body !== 'object') {
     return { ok: false, error: 'Body must be a JSON object' };
   }
 
   const payload = body as Record<string, unknown>;
-  const category = payload.category;
+  const category = normalizeCategory(payload.category);
   const score = typeof payload.score === 'number' ? payload.score : Number(payload.score);
-
-  const allowedCategories: Review['category'][] = [
-    'ACCOUNTING',
-    'INVOICING',
-    'WEBSITE BUILDER',
-    'PAYMENTS',
-    'JOB MANAGEMENT',
-    'INSURANCE',
-  ];
 
   if (!isNonEmptyString(payload.productName)) return { ok: false, error: 'Missing or invalid productName' };
   if (!isNonEmptyString(payload.slug)) return { ok: false, error: 'Missing or invalid slug' };
-  if (typeof category !== 'string' || !allowedCategories.includes(category as Review['category'])) {
+  if (!category) {
     return { ok: false, error: 'Missing or invalid category' };
   }
   if (!Number.isFinite(score) || score < 0 || score > 10) return { ok: false, error: 'Missing or invalid score' };
@@ -72,7 +83,7 @@ function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } 
   const reviewData: Partial<Review> = {
     productName: payload.productName.trim(),
     slug: payload.slug.trim(),
-    category: category as Review['category'],
+    category,
     score,
     pros: payload.pros,
     cons: payload.cons,
