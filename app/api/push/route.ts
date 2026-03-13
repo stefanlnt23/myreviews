@@ -271,9 +271,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const reviewData = Object.fromEntries(
+    const reviewData = stripUndefinedDeep(Object.fromEntries(
       Object.entries(validated.payload).filter(([, v]) => v !== undefined)
-    ) as unknown as Partial<Review>;
+    )) as Partial<Review>;
 
     await upsertReview(validated.payload.slug!, reviewData);
 
@@ -284,7 +284,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error processing POST /api/push:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      {
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
