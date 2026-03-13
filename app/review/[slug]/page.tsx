@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Check, X } from 'lucide-react';
+import { Check, X, MessageSquareQuote, ThumbsDown, ThumbsUp, Minus, ExternalLink } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getReviewBySlug, getSimilarReviews } from '../../../lib/db/reviews';
 import { getScoreColor, getCategoryStyles, cn } from '../../../lib/utils';
@@ -10,28 +10,65 @@ import ReviewCard from '../../../components/ReviewCard';
 export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const review = await getReviewBySlug(params.slug);
-  
-  if (!review) return { title: 'Not Found | SoleToolkit' };
+  try {
+    const review = await getReviewBySlug(params.slug);
 
-  return {
-    title: `${review.productName} Review 2026 | SoleToolkit`,
-    description: review.summary,
-    openGraph: {
-      title: `${review.productName} Review | SoleToolkit`,
+    if (!review) return { title: 'Not Found | SoleToolkit' };
+
+    return {
+      title: `${review.productName} Review 2026 | SoleToolkit`,
       description: review.summary,
-    }
-  };
+      openGraph: {
+        title: `${review.productName} Review | SoleToolkit`,
+        description: review.summary,
+      }
+    };
+  } catch (error) {
+    console.error('Failed to generate review metadata', error);
+    return {
+      title: 'Review | SoleToolkit',
+      description: 'Practical UK business software reviews.',
+    };
+  }
 }
 
 export default async function ReviewPage({ params }: { params: { slug: string } }) {
-  const review = await getReviewBySlug(params.slug);
+  let review: Awaited<ReturnType<typeof getReviewBySlug>>;
+  try {
+    review = await getReviewBySlug(params.slug);
+  } catch (error) {
+    console.error('Failed to load review page data', error);
+    notFound();
+  }
 
   if (!review) {
     notFound();
   }
 
-  const similarReviews = await getSimilarReviews(review.category, review.slug);
+  let similarReviews: Awaited<ReturnType<typeof getSimilarReviews>> = [];
+  try {
+    similarReviews = await getSimilarReviews(review.category, review.slug);
+  } catch (error) {
+    console.error('Failed to load similar reviews', error);
+  }
+
+  const verdict = review.verdict || (review.score >= 8 ? 'YES' : review.score >= 6 ? 'MAYBE' : 'NO');
+  const verdictText = verdict === 'YES' ? 'Yes, worth it' : verdict === 'MAYBE' ? 'Maybe, depends on your setup' : 'No, skip for most trades';
+  const verdictTone = verdict === 'YES'
+    ? 'bg-[#e8f4f0] text-[#2d8a6b] border-[#2d8a6b]/20'
+    : verdict === 'NO'
+      ? 'bg-[#fff5f5] text-[#c0392b] border-[#c0392b]/20'
+      : 'bg-[#f5f1eb] text-[#6b5d4a] border-[#c8b89a]/40';
+  const verdictReason = review.verdictReason || review.summary;
+  const scoreBreakdown = review.scoreBreakdown
+    ? [
+        { key: 'Ease of use', value: review.scoreBreakdown.easeOfUse },
+        { key: 'Value for money', value: review.scoreBreakdown.valueForMoney },
+        { key: 'UK fit', value: review.scoreBreakdown.ukFit },
+        { key: 'Support quality', value: review.scoreBreakdown.supportQuality },
+        { key: 'Feature depth', value: review.scoreBreakdown.featureDepth },
+      ]
+    : [];
 
   return (
     <article className="min-h-screen bg-background pb-32">
@@ -117,6 +154,132 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
             <p className="font-serif text-[15px] text-gray-700 leading-relaxed">{review.dateUpdated || 'Recently reviewed'}</p>
           </div>
         </div>
+
+        <div className="mb-10 rounded-2xl border border-[#e8e4de] bg-white p-6 md:p-7 shadow-sm">
+          <p className="mb-3 text-[11px] font-heading font-bold uppercase tracking-widest text-gray-500">Should you get it?</p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <span className={cn('inline-flex items-center rounded-full border px-3 py-1 text-xs font-heading font-bold uppercase tracking-wide', verdictTone)}>
+                {verdictText}
+              </span>
+              <p className="mt-3 font-serif text-[15px] leading-relaxed text-gray-700">{verdictReason}</p>
+            </div>
+            <div className="rounded-xl border border-[#e8e4de] bg-[#faf8f5] px-4 py-3 text-right">
+              <p className="text-[11px] font-heading uppercase tracking-widest text-gray-500">Overall score</p>
+              <p className="font-heading text-3xl font-extrabold text-[#111]">{review.score}<span className="text-base text-gray-500">/10</span></p>
+            </div>
+          </div>
+        </div>
+
+        {review.reviewSignals && review.reviewSignals.length > 0 && (
+          <div className="mb-10 rounded-2xl border border-[#e8e4de] bg-white p-6 md:p-7 shadow-sm">
+            <h2 className="mb-5 flex items-center gap-2 font-heading text-2xl font-extrabold text-[#111]">
+              <MessageSquareQuote className="h-5 w-5 text-accent" />
+              What real users say
+            </h2>
+            <div className="space-y-3">
+              {review.reviewSignals.map((signal, i) => (
+                <div key={`${signal.platform}-${i}`} className="rounded-xl border border-[#eee8df] bg-[#faf8f5] p-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-heading font-bold uppercase tracking-wide text-[#111] border border-[#e8e4de]">{signal.platform}</span>
+                    {signal.rating && <span className="text-xs font-sans font-semibold text-gray-700">Rating: {signal.rating}</span>}
+                    {signal.reviewCount && <span className="text-xs font-sans text-gray-600">• {signal.reviewCount}</span>}
+                    {signal.sentiment && (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-heading font-bold uppercase tracking-wide text-gray-600">
+                        {signal.sentiment === 'POSITIVE' ? <ThumbsUp className="h-3.5 w-3.5 text-[#2d8a6b]" /> : signal.sentiment === 'NEGATIVE' ? <ThumbsDown className="h-3.5 w-3.5 text-[#c0392b]" /> : <Minus className="h-3.5 w-3.5 text-[#6b5d4a]" />}
+                        {signal.sentiment.toLowerCase()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-serif text-[15px] leading-relaxed text-gray-700">{signal.takeaway}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+        {(review.whoItsFor?.length || review.notFor?.length) && (
+          <div className="mb-10 grid gap-4 md:grid-cols-2">
+            {review.whoItsFor && review.whoItsFor.length > 0 && (
+              <div className="rounded-2xl border border-[#2d8a6b]/20 bg-[#f0faf5] p-5">
+                <p className="mb-3 text-[11px] font-heading font-bold uppercase tracking-widest text-[#2d8a6b]">Best for</p>
+                <div className="flex flex-wrap gap-2">
+                  {review.whoItsFor.map((item, idx) => (
+                    <span key={`${item}-${idx}`} className="rounded-full border border-[#2d8a6b]/30 bg-white px-3 py-1 text-xs font-semibold text-[#1f6c53]">{item}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {review.notFor && review.notFor.length > 0 && (
+              <div className="rounded-2xl border border-[#c0392b]/20 bg-[#fff5f5] p-5">
+                <p className="mb-3 text-[11px] font-heading font-bold uppercase tracking-widest text-[#c0392b]">Avoid if</p>
+                <div className="flex flex-wrap gap-2">
+                  {review.notFor.map((item, idx) => (
+                    <span key={`${item}-${idx}`} className="rounded-full border border-[#c0392b]/30 bg-white px-3 py-1 text-xs font-semibold text-[#972d23]">{item}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {scoreBreakdown.length > 0 && (
+          <div className="mb-10 rounded-2xl border border-[#e8e4de] bg-white p-6 md:p-7 shadow-sm">
+            <h2 className="mb-5 font-heading text-2xl font-extrabold text-[#111]">Score breakdown</h2>
+            <div className="space-y-4">
+              {scoreBreakdown.map((row) => (
+                <div key={row.key}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="font-heading font-bold text-[#111]">{row.key}</span>
+                    <span className="font-heading font-extrabold text-accent">{row.value.toFixed(1)}/10</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-[#f1ece4]">
+                    <div className="h-2.5 rounded-full bg-accent" style={{ width: `${Math.max(0, Math.min(100, row.value * 10))}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {review.userQuotes && review.userQuotes.length > 0 && (
+          <div className="mb-10 rounded-2xl border border-[#e8e4de] bg-white p-6 md:p-7 shadow-sm">
+            <h2 className="mb-5 font-heading text-2xl font-extrabold text-[#111]">Verified user quotes</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {review.userQuotes.map((quote, i) => (
+                <article key={`${quote.platform}-${i}`} className="rounded-xl border border-[#eee8df] bg-[#faf8f5] p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-[#e8e4de] bg-white px-3 py-1 text-[11px] font-heading font-bold uppercase tracking-wide">{quote.platform}</span>
+                    {quote.topicTag && <span className="text-xs text-gray-600">#{quote.topicTag}</span>}
+                    {quote.rating && <span className="ml-auto text-xs font-semibold text-gray-700">{quote.rating}</span>}
+                  </div>
+                  <p className="mb-3 font-serif text-[15px] leading-relaxed text-gray-700">“{quote.quote}”</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                    {quote.author && <span>{quote.author}</span>}
+                    {quote.date && <span>• {quote.date}</span>}
+                    {quote.url && (
+                      <a href={quote.url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1 text-accent hover:underline">
+                        Source <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {review.sourceAudit && (
+          <div className="mb-12 rounded-2xl border border-[#e8e4de] bg-[#faf8f5] p-5 shadow-sm">
+            <p className="text-[11px] font-heading font-bold uppercase tracking-widest text-gray-500">Evidence freshness</p>
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-700">
+              <span>Checked: <strong>{review.sourceAudit.checkedAt}</strong></span>
+              <span>• Sources: <strong>{review.sourceAudit.sourcesCount}</strong></span>
+              {review.sourceAudit.confidence && <span>• Confidence: <strong>{review.sourceAudit.confidence}</strong></span>}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">

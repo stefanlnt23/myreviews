@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { upsertReview, deleteReview } from '../../../lib/db/reviews';
-import { Review, ReviewImage } from '../../../types';
+import { Review, ReviewImage, ReviewSignal, UserQuote, ScoreBreakdown, SourceAudit } from '../../../types';
 
 function validateApiKey(req: NextRequest) {
   const apiKey = req.headers.get('x-api-key');
@@ -57,6 +57,137 @@ function normalizeCategory(value: unknown): Review['category'] | null {
   return aliases[normalized] ?? null;
 }
 
+function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const normalized = value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+
+      const candidate = entry as Record<string, unknown>;
+      const platform = candidate.platform;
+      const takeaway = candidate.takeaway;
+
+      if (!isNonEmptyString(platform) || !isNonEmptyString(takeaway)) return null;
+
+      const sentimentRaw = typeof candidate.sentiment === 'string' ? candidate.sentiment.trim().toUpperCase() : undefined;
+      const sentiment = sentimentRaw === 'POSITIVE' || sentimentRaw === 'MIXED' || sentimentRaw === 'NEGATIVE'
+        ? sentimentRaw
+        : undefined;
+
+      return {
+        platform: platform.trim(),
+        rating: isNonEmptyString(candidate.rating) ? candidate.rating.trim() : undefined,
+        reviewCount: isNonEmptyString(candidate.reviewCount) ? candidate.reviewCount.trim() : undefined,
+        sentiment,
+        takeaway: takeaway.trim(),
+      } as ReviewSignal;
+    })
+    .filter(Boolean) as ReviewSignal[];
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function clampScore(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n < 0 || n > 10) return null;
+  return Number(n.toFixed(1));
+}
+
+function normalizeStringList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeScoreBreakdown(value: unknown): ScoreBreakdown | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = value as Record<string, unknown>;
+
+  const easeOfUse = clampScore(candidate.easeOfUse);
+  const valueForMoney = clampScore(candidate.valueForMoney);
+  const ukFit = clampScore(candidate.ukFit);
+  const supportQuality = clampScore(candidate.supportQuality);
+  const featureDepth = clampScore(candidate.featureDepth);
+
+  if ([easeOfUse, valueForMoney, ukFit, supportQuality, featureDepth].some((n) => n === null)) {
+    return undefined;
+  }
+
+  return {
+    easeOfUse: easeOfUse!,
+    valueForMoney: valueForMoney!,
+    ukFit: ukFit!,
+    supportQuality: supportQuality!,
+    featureDepth: featureDepth!,
+  };
+}
+
+function normalizeUserQuotes(value: unknown): UserQuote[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const normalized = value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const candidate = entry as Record<string, unknown>;
+      const platform = candidate.platform;
+      const quote = candidate.quote;
+
+      if (!isNonEmptyString(platform) || !isNonEmptyString(quote)) return null;
+
+      const rawUrl = candidate.url;
+      const url = isNonEmptyString(rawUrl) && /^https?:\/\//i.test(rawUrl.trim()) ? rawUrl.trim() : undefined;
+
+      return {
+        platform: platform.trim(),
+        quote: quote.trim(),
+        url,
+        author: isNonEmptyString(candidate.author) ? candidate.author.trim() : undefined,
+        rating: isNonEmptyString(candidate.rating) ? candidate.rating.trim() : undefined,
+        date: isNonEmptyString(candidate.date) ? candidate.date.trim() : undefined,
+        topicTag: isNonEmptyString(candidate.topicTag) ? candidate.topicTag.trim() : undefined,
+      } as UserQuote;
+    })
+    .filter(Boolean) as UserQuote[];
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeSourceAudit(value: unknown): SourceAudit | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = value as Record<string, unknown>;
+  const checkedAt = candidate.checkedAt;
+
+  if (!isNonEmptyString(checkedAt)) return undefined;
+
+  const sourcesCount = typeof candidate.sourcesCount === 'number'
+    ? candidate.sourcesCount
+    : Number(candidate.sourcesCount);
+
+  if (!Number.isFinite(sourcesCount) || sourcesCount <= 0) return undefined;
+
+  const rawConfidence = typeof candidate.confidence === 'string' ? candidate.confidence.trim().toUpperCase() : undefined;
+  const confidence = rawConfidence === 'HIGH' || rawConfidence === 'MEDIUM' || rawConfidence === 'LOW'
+    ? rawConfidence
+    : undefined;
+
+  return {
+    checkedAt: checkedAt.trim(),
+    sourcesCount: Math.round(sourcesCount),
+    confidence,
+  };
+}
+
+function normalizeVerdict(value: unknown): Review['verdict'] | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const normalized = value.trim().toUpperCase();
+  if (normalized === 'YES' || normalized === 'NO' || normalized === 'MAYBE') return normalized;
+  return undefined;
+}
+
 function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } | { ok: false; error: string } {
   if (!body || typeof body !== 'object') {
     return { ok: false, error: 'Body must be a JSON object' };
@@ -79,6 +210,13 @@ function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } 
   if (!isNonEmptyString(payload.affiliateLink)) return { ok: false, error: 'Missing or invalid affiliateLink' };
 
   const normalizedImages = normalizeImages(payload.images);
+  const reviewSignals = normalizeReviewSignals(payload.reviewSignals);
+  const verdict = normalizeVerdict(payload.verdict);
+  const userQuotes = normalizeUserQuotes(payload.userQuotes);
+  const scoreBreakdown = normalizeScoreBreakdown(payload.scoreBreakdown);
+  const whoItsFor = normalizeStringList(payload.whoItsFor);
+  const notFor = normalizeStringList(payload.notFor);
+  const sourceAudit = normalizeSourceAudit(payload.sourceAudit);
 
   const reviewData: Partial<Review> = {
     productName: payload.productName.trim(),
@@ -100,6 +238,14 @@ function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } 
     images: normalizedImages,
     youtubeTitle: isNonEmptyString(payload.youtubeTitle) ? payload.youtubeTitle.trim() : undefined,
     expertQuote: isNonEmptyString(payload.expertQuote) ? payload.expertQuote.trim() : undefined,
+    verdict,
+    verdictReason: isNonEmptyString(payload.verdictReason) ? payload.verdictReason.trim() : undefined,
+    reviewSignals,
+    userQuotes,
+    scoreBreakdown,
+    whoItsFor,
+    notFor,
+    sourceAudit,
     faqItems: Array.isArray(payload.faqItems) ? (payload.faqItems as Review['faqItems']) : undefined,
     alternatives: Array.isArray(payload.alternatives) ? (payload.alternatives as Review['alternatives']) : undefined,
     lastTestedVersion: isNonEmptyString(payload.lastTestedVersion) ? payload.lastTestedVersion.trim() : undefined,
