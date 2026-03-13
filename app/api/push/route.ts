@@ -57,7 +57,6 @@ function normalizeCategory(value: unknown): Review['category'] | null {
   return aliases[normalized] ?? null;
 }
 
-
 function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
