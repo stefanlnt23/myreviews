@@ -57,7 +57,6 @@ function normalizeCategory(value: unknown): Review['category'] | null {
   return aliases[normalized] ?? null;
 }
 
-
 function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
@@ -72,7 +71,7 @@ function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
       if (!isNonEmptyString(platform) || !isNonEmptyString(takeaway)) return null;
 
       const sentimentRaw = typeof candidate.sentiment === 'string' ? candidate.sentiment.trim().toUpperCase() : undefined;
-      const sentiment = sentimentRaw === 'POSITIVE' || sentimentRaw === 'MIXED' || sentimentRaw === 'NEGATIVE' || sentimentRaw === 'NEUTRAL'
+      const sentiment = sentimentRaw === 'POSITIVE' || sentimentRaw === 'MIXED' || sentimentRaw === 'NEGATIVE'
         ? sentimentRaw
         : undefined;
 
@@ -188,25 +187,6 @@ function normalizeVerdict(value: unknown): Review['verdict'] | undefined {
   const normalized = value.trim().toUpperCase();
   if (normalized === 'YES' || normalized === 'NO' || normalized === 'MAYBE') return normalized;
   return undefined;
-}
-
-
-function stripUndefinedDeep<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value
-      .map((entry) => stripUndefinedDeep(entry))
-      .filter((entry) => entry !== undefined) as T;
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .map(([k, v]) => [k, stripUndefinedDeep(v)])
-        .filter(([, v]) => v !== undefined)
-    ) as T;
-  }
-
-  return value;
 }
 
 function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } | { ok: false; error: string } {
