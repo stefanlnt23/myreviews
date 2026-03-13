@@ -14,7 +14,7 @@ export interface ReviewSignal {
   platform: string;
   rating?: string;
   reviewCount?: string;
-  sentiment?: 'POSITIVE' | 'MIXED' | 'NEGATIVE' | 'NEUTRAL';
+  sentiment?: 'POSITIVE' | 'MIXED' | 'NEGATIVE';
   takeaway: string;
 }
 

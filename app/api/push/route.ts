@@ -57,7 +57,6 @@ function normalizeCategory(value: unknown): Review['category'] | null {
   return aliases[normalized] ?? null;
 }
 
-
 function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
@@ -72,7 +71,7 @@ function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
       if (!isNonEmptyString(platform) || !isNonEmptyString(takeaway)) return null;
 
       const sentimentRaw = typeof candidate.sentiment === 'string' ? candidate.sentiment.trim().toUpperCase() : undefined;
-      const sentiment = sentimentRaw === 'POSITIVE' || sentimentRaw === 'MIXED' || sentimentRaw === 'NEGATIVE' || sentimentRaw === 'NEUTRAL'
+      const sentiment = sentimentRaw === 'POSITIVE' || sentimentRaw === 'MIXED' || sentimentRaw === 'NEGATIVE'
         ? sentimentRaw
         : undefined;
 
@@ -190,7 +189,6 @@ function normalizeVerdict(value: unknown): Review['verdict'] | undefined {
   return undefined;
 }
 
-
 function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } | { ok: false; error: string } {
   if (!body || typeof body !== 'object') {
     return { ok: false, error: 'Body must be a JSON object' };
@@ -273,25 +271,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const sanitizeForFirestore = (value: unknown): unknown => {
-      if (Array.isArray(value)) {
-        return value
-          .map((entry) => sanitizeForFirestore(entry))
-          .filter((entry) => entry !== undefined);
-      }
-
-      if (value && typeof value === 'object') {
-        return Object.fromEntries(
-          Object.entries(value as Record<string, unknown>)
-            .map(([k, v]) => [k, sanitizeForFirestore(v)])
-            .filter(([, v]) => v !== undefined)
-        );
-      }
-
-      return value;
-    };
-
-    const reviewData = sanitizeForFirestore(Object.fromEntries(
+    const reviewData = stripUndefinedDeep(Object.fromEntries(
       Object.entries(validated.payload).filter(([, v]) => v !== undefined)
     )) as Partial<Review>;
 

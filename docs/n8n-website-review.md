@@ -50,7 +50,7 @@ To make each review easier to scan and more trustworthy, include these optional 
   - `platform` (required)
   - `rating` (optional string, e.g. `4.2/5`)
   - `reviewCount` (optional string, e.g. `5,000+ reviews`)
-  - `sentiment` (optional: `POSITIVE` | `MIXED` | `NEGATIVE` | `NEUTRAL`)
+  - `sentiment` (optional: `POSITIVE` | `MIXED` | `NEGATIVE`)
   - `takeaway` (required)
 
 ## Full payload field contract (for n8n)
