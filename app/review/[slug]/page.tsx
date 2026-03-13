@@ -101,6 +101,24 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
         </div>
       </div>
 
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="rounded-2xl border border-[#e8e4de] bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-heading uppercase tracking-widest text-gray-500 font-bold mb-2">Quick verdict</p>
+            <p className="font-serif text-[15px] text-gray-700 leading-relaxed">{review.summary}</p>
+          </div>
+          <div className="rounded-2xl border border-[#e8e4de] bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-heading uppercase tracking-widest text-gray-500 font-bold mb-2">Best for</p>
+            <p className="font-serif text-[15px] text-gray-700 leading-relaxed">Small UK businesses wanting practical, no-fluff software guidance.</p>
+          </div>
+          <div className="rounded-2xl border border-[#e8e4de] bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-heading uppercase tracking-widest text-gray-500 font-bold mb-2">Updated</p>
+            <p className="font-serif text-[15px] text-gray-700 leading-relaxed">{review.dateUpdated || 'Recently reviewed'}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
 
         {/* 3. PROS / CONS */}
@@ -140,16 +158,25 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
         {review.images && review.images.length > 0 && (
           <div className="mb-20 overflow-x-auto pb-4 snap-x">
             <div className="flex gap-6 min-w-max">
-              {review.images.map((img, i) => (
-                <img 
-                  key={i} 
-                  src={`/api/image-proxy?url=${encodeURIComponent(img)}`}
-                  alt={`${review.productName} screenshot ${i + 1}`} 
-                  className="h-64 md:h-80 w-auto rounded-[16px] border-[1.5px] border-[#e8e4de] object-cover snap-center bg-white shadow-md p-1"
-                  loading="lazy"
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                />
-              ))}
+              {review.images.map((img, i) => {
+                const imageUrl = typeof img === 'string' ? img : img.src;
+                const imageAlt = typeof img === 'string'
+                  ? `${review.productName} screenshot ${i + 1}`
+                  : img.alt || `${review.productName} screenshot ${i + 1}`;
+
+                if (!imageUrl) return null;
+
+                return (
+                  <img
+                    key={`${imageUrl}-${i}`}
+                    src={`/api/image-proxy?url=${encodeURIComponent(imageUrl)}`}
+                    alt={imageAlt}
+                    className="h-64 md:h-80 w-auto rounded-[16px] border-[1.5px] border-[#e8e4de] object-cover snap-center bg-white shadow-md p-1"
+                    loading="lazy"
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                  />
+                );
+              })}
             </div>
           </div>
         )}
@@ -211,7 +238,7 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
         )}
 
         {/* 6. FULL REVIEW */}
-        <div className="mb-24">
+        <div className="mb-24 rounded-[24px] border-[1.5px] border-[#e8e4de] bg-white p-7 md:p-10 shadow-sm">
           <h2 className="font-heading font-extrabold text-4xl text-[#111] mb-10 tracking-normal">Our Full Review</h2>
           <div className="prose prose-lg max-w-none 
             prose-headings:font-heading prose-headings:font-extrabold prose-headings:text-[#111]
