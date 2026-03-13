@@ -88,6 +88,7 @@ function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
+
 function clampScore(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return null;
