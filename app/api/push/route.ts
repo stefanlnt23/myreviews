@@ -57,7 +57,6 @@ function normalizeCategory(value: unknown): Review['category'] | null {
   return aliases[normalized] ?? null;
 }
 
-
 function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
@@ -88,7 +87,6 @@ function normalizeReviewSignals(value: unknown): ReviewSignal[] | undefined {
 
   return normalized.length > 0 ? normalized : undefined;
 }
-
 
 function clampScore(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(value);
