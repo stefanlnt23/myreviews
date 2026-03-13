@@ -1,0 +1,1016 @@
+{
+  "name": "SoleToolkit Daily Review Generator (Full Fields)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "d814e09f-9f51-4c41-a28d-c864c3cd22d5",
+      "name": "Every Day at 9am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "INSERT_HERE_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "pending"
+            }
+          ]
+        }
+      },
+      "id": "1b0e9785-58ab-434b-be1b-0311f3e9ffe6",
+      "name": "Get Next Product",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        420,
+        -200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "INSERT_HERE_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "283fcdb9-ffc3-4d7a-ac5a-3332603a71df",
+      "name": "Take 1 Only",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        620,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "version": 2
+          }
+        }
+      },
+      "id": "c2f4aad5-1bd3-4b63-a509-9f0e8b007f59",
+      "name": "Has Product?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        820,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "INSERT_HERE_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "processing",
+            "claimedAt": "={{ $now.format('yyyy-MM-dd HH:mm:ss') }}",
+            "attempts": "={{ String(Number($json.attempts || 0) + 1) }}",
+            "lastNode": "mark_processing"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        }
+      },
+      "id": "cbef0dad-38bf-4add-8265-e9cfe981a79e",
+      "name": "Mark Processing",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1040,
+        -280
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "INSERT_HERE_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=Search factual details about '{{ $('Take 1 Only').first().json.productName }}'{{ $('Take 1 Only').first().json.homepageUrl ? ' \u2014 website: ' + $('Take 1 Only').first().json.homepageUrl : '' }}.\n\nReturn core features, target users, mobile app capabilities (iOS/Android), and official homepage URL. No fluff."
+            }
+          ]
+        },
+        "simplify": true
+      },
+      "id": "987ff901-41f0-4695-be93-955ca1c8ec76",
+      "name": "P1: Features & Audience",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        1260,
+        -280
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "INSERT_HERE_YOUR_PERPLEXITY_CREDENTIAL_ID",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=Find current pricing tiers for '{{ $('Take 1 Only').first().json.productName }}'. Include GBP if available, trial/free plan, setup/transaction/add-on fees, plan inclusions, and pricing URL. No guessing."
+            }
+          ]
+        },
+        "simplify": true
+      },
+      "id": "9c2fb539-9f6b-48a2-8f9f-62e5244540ae",
+      "name": "P2: Pricing",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        1480,
+        -280
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "INSERT_HERE_YOUR_PERPLEXITY_CREDENTIAL_ID",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=Find real user sentiment for '{{ $('Take 1 Only').first().json.productName }}' from Trustpilot, G2, Capterra, Reddit, and trade forums. Include praise patterns, complaint patterns, red flags, and available ratings/review counts."
+            }
+          ]
+        },
+        "simplify": true
+      },
+      "id": "613cf031-0536-4d25-ab7a-de40791e7fed",
+      "name": "P3: User Reviews",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        1700,
+        -280
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "INSERT_HERE_YOUR_PERPLEXITY_CREDENTIAL_ID",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=Find UK-specific compatibility for '{{ $('Take 1 Only').first().json.productName }}': MTD, CIS, HMRC listing status, integrations (Xero/QuickBooks/Sage/FreeAgent), and UK limitations."
+            }
+          ]
+        },
+        "simplify": true
+      },
+      "id": "f27333e3-c8c7-450d-bcc2-574676444d7f",
+      "name": "P4: UK Compliance",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        -280
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "INSERT_HERE_YOUR_PERPLEXITY_CREDENTIAL_ID",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const getText = (nodeName) => {\n  const data = $(nodeName).first().json;\n  return String(data?.message?.content ?? data?.message ?? data?.text ?? '').trim();\n};\nconst product = $('Take 1 Only').first().json;\nconst features = getText('P1: Features & Audience');\nconst pricing = getText('P2: Pricing');\nconst reviews = getText('P3: User Reviews');\nconst compliance = getText('P4: UK Compliance');\nconst combinedResearch = [\n  `PRODUCT: ${product.productName || ''}`,\n  `CATEGORY: ${product.category || ''}`,\n  `HOMEPAGE: ${product.homepageUrl || 'unknown'}`,\n  '',\n  '=== FEATURES & AUDIENCE ===', features, '',\n  '=== PRICING ===', pricing, '',\n  '=== USER REVIEWS ===', reviews, '',\n  '=== UK COMPLIANCE ===', compliance,\n].join('\\n').trim();\nreturn [{ json: {\n  id: String(product.id || ''),\n  productName: product.productName || '',\n  category: product.category || '',\n  homepageUrl: product.homepageUrl || '',\n  attempts: Number(product.attempts || 0) + 1,\n  combinedResearch,\n  sectionLengths: { features: features.length, pricing: pricing.length, reviews: reviews.length, compliance: compliance.length, combined: combinedResearch.length }\n}}];"
+      },
+      "id": "c8218cf0-3ad4-4105-83c9-6e3a19c0f323",
+      "name": "Assemble Research",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst errors = [];\nconst l = item.sectionLengths || {};\nif (!item.id) errors.push('Missing product id');\nif (!item.productName) errors.push('Missing productName');\nif ((l.features || 0) < 120) errors.push(`Features too short (${l.features || 0})`);\nif ((l.pricing || 0) < 120) errors.push(`Pricing too short (${l.pricing || 0})`);\nif ((l.reviews || 0) < 120) errors.push(`Reviews too short (${l.reviews || 0})`);\nif ((l.compliance || 0) < 80) errors.push(`Compliance too short (${l.compliance || 0})`);\nif ((l.combined || 0) < 700) errors.push(`Combined too short (${l.combined || 0})`);\nreturn [{ json: { ok: errors.length === 0, errors, ...item } }];"
+      },
+      "id": "e18552c4-7d8d-4e80-b302-b8b4e56b3e47",
+      "name": "Validate Research",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2380,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "version": 2
+          }
+        }
+      },
+      "id": "9e2d479b-9afa-4bcd-8570-7830a85743a4",
+      "name": "Research OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2580,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "INSERT_HERE_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "research_failed",
+            "error": "={{ $json.errors.join(' | ') }}",
+            "lastNode": "validate_research"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        }
+      },
+      "id": "3e22b099-ce5b-4e39-beab-32ff1521553b",
+      "name": "Mark Research Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2780,
+        -120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "INSERT_HERE_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=You are Stefan, a blunt UK tradesman reviewer. Use only the research below; do not invent facts.\n\nRESEARCH:\n{{ $json.combinedResearch }}\n\nReturn ONLY one raw JSON object (no markdown) with these fields:\n{\n  \"summary\": \"1-2 blunt verdict sentences\",\n  \"detailedReview\": \"420-700 words\",\n  \"pros\": [\"...\", \"...\", \"...\"],\n  \"cons\": [\"...\", \"...\"],\n  \"pricingTable\": [{\"plan\":\"...\",\"price\":\"...\",\"bestFor\":\"...\"}],\n  \"score\": 7.5,\n  \"mtdReady\": false,\n  \"expertQuote\": \"...\",\n  \"homepageUrl\": \"https://...\",\n  \"affiliateLink\": \"https://...\",\n  \"verdict\": \"YES\",\n  \"verdictReason\": \"Clear 1-2 sentence buying advice\",\n  \"reviewSignals\": [\n    {\"platform\":\"Trustpilot\",\"rating\":\"4.2/5\",\"reviewCount\":\"5000+\",\"sentiment\":\"MIXED\",\"takeaway\":\"...\"},\n    {\"platform\":\"G2\",\"rating\":\"4.4/5\",\"reviewCount\":\"3000+\",\"sentiment\":\"POSITIVE\",\"takeaway\":\"...\"}\n  ],\n  \"userQuotes\": [\n    {\"platform\":\"Trustpilot\",\"quote\":\"...\",\"url\":\"https://...\",\"author\":\"Verified user\",\"rating\":\"4/5\",\"date\":\"2026-03-13\",\"topicTag\":\"support\"}\n  ],\n  \"scoreBreakdown\": {\"easeOfUse\":8.1,\"valueForMoney\":7.0,\"ukFit\":6.0,\"supportQuality\":6.5,\"featureDepth\":8.7},\n  \"whoItsFor\": [\"...\",\"...\"],\n  \"notFor\": [\"...\",\"...\"],\n  \"sourceAudit\": {\"checkedAt\":\"{{ $now.format('yyyy-MM-dd') }}\",\"sourcesCount\":5,\"confidence\":\"MEDIUM\"}\n}"
+            }
+          ]
+        },
+        "simplify": true
+      },
+      "id": "9290bb9f-8c49-4535-8510-390d11fe8bb6",
+      "name": "AI Writer (Stefan)",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        2780,
+        -380
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "INSERT_HERE_YOUR_PERPLEXITY_CREDENTIAL_ID",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sanitizeAndParseJson(raw) {\n  let str = String(raw || '').replace(/```json\\s*/gi, '').replace(/```\\s*/gi, '').replace(/\\[\\d+\\]/g, '').trim();\n  const start = str.indexOf('{');\n  const end = str.lastIndexOf('}');\n  if (start === -1 || end === -1 || end <= start) throw new Error('No JSON object found');\n  str = str.slice(start, end + 1).replace(/,\\s*([}\\]])/g, '$1');\n  return JSON.parse(str);\n}\nconst inputJson = $input.first().json;\nconst raw = String(inputJson?.message?.content ?? inputJson?.message ?? inputJson?.text ?? '').trim();\nconst product = $('Take 1 Only').first().json;\ntry {\n  const review = sanitizeAndParseJson(raw);\n  review.id = String(product.id || '');\n  review.productName = product.productName || review.productName || '';\n  review.category = product.category || review.category || '';\n  review.slug = (product.productName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');\n  review.homepageUrl = review.homepageUrl || product.homepageUrl || '';\n  review.affiliateLink = review.affiliateLink || review.homepageUrl || product.homepageUrl || '';\n  review.dateUpdated = new Date().toISOString().slice(0, 10);\n  if (typeof review.score === 'string') review.score = parseFloat(review.score);\n  if (Number.isNaN(review.score)) review.score = 0;\n  if (typeof review.mtdReady !== 'boolean') review.mtdReady = String(review.mtdReady).toLowerCase() === 'true';\n  return [{ json: { parseOk: true, rawWriterSnippet: raw.slice(0, 2000), ...review } }];\n} catch (e) {\n  return [{ json: { parseOk: false, id: String(product.id || ''), productName: product.productName || '', slug: (product.productName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), parseError: e.message, rawWriterSnippet: raw.slice(0, 2000) } }];\n}"
+      },
+      "id": "5d83aca8-4894-4e9f-98e9-65f07ffaa952",
+      "name": "Extract Review JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.parseOk }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "version": 2
+          }
+        }
+      },
+      "id": "8e0b5c7f-75f4-4a93-8948-9c3a61c62a52",
+      "name": "Parse OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3200,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "INSERT_HERE_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "parse_failed",
+            "parseError": "={{ $json.parseError }}",
+            "rawWriterSnippet": "={{ $json.rawWriterSnippet }}",
+            "lastNode": "extract_review_json"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        }
+      },
+      "id": "f3816331-4d0a-46d5-9d50-0be35b39b8fe",
+      "name": "Mark Parse Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3400,
+        -220
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "INSERT_HERE_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst errors = [];\nconst wordCount = (s) => String(s || '').trim().split(/\\s+/).filter(Boolean).length;\nconst wc = wordCount(item.detailedReview);\nif (!item.id) errors.push('Missing id');\nif (!item.productName) errors.push('Missing productName');\nif (!item.slug) errors.push('Missing slug');\nif (typeof item.score !== 'number' || Number.isNaN(item.score) || item.score < 0 || item.score > 10) errors.push(`Invalid score: ${item.score}`);\nif (!item.summary || item.summary.trim().length < 20) errors.push('Summary too short');\nif (!item.detailedReview || wc < 350) errors.push(`Detailed review too short (${wc})`);\nif (!Array.isArray(item.pros) || item.pros.length < 3) errors.push('Need >=3 pros');\nif (!Array.isArray(item.cons) || item.cons.length < 2) errors.push('Need >=2 cons');\nif (!Array.isArray(item.pricingTable) || item.pricingTable.length < 1) errors.push('pricingTable missing');\nif (!item.homepageUrl || !/^https?:\\/\\//i.test(item.homepageUrl)) errors.push('Invalid homepageUrl');\nif (!item.affiliateLink || !/^https?:\\/\\//i.test(item.affiliateLink)) errors.push('Invalid affiliateLink');\nif (item.verdict && !['YES','NO','MAYBE'].includes(String(item.verdict).toUpperCase())) errors.push('Invalid verdict');\nif (item.scoreBreakdown) {\n  const keys = ['easeOfUse','valueForMoney','ukFit','supportQuality','featureDepth'];\n  for (const k of keys) {\n    const n = Number(item.scoreBreakdown[k]);\n    if (!Number.isFinite(n) || n < 0 || n > 10) errors.push(`Invalid scoreBreakdown.${k}`);\n  }\n}\nif (item.userQuotes && (!Array.isArray(item.userQuotes) || item.userQuotes.some(q => !q.platform || !q.quote))) errors.push('Invalid userQuotes');\nif (item.reviewSignals && (!Array.isArray(item.reviewSignals) || item.reviewSignals.some(s => !s.platform || !s.takeaway))) errors.push('Invalid reviewSignals');\nreturn [{ json: { ok: errors.length === 0, errors, payload: { ...item, wordCount: wc } } }];"
+      },
+      "id": "0e809d82-be96-47b4-9067-bbd2dfe0d599",
+      "name": "Validate Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "version": 2
+          }
+        }
+      },
+      "id": "b6fc1774-4e3e-44a0-b958-ec98ab4102ff",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3600,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "=Fix this JSON so it passes validation without inventing facts. Validation errors: {{ $json.errors.join(' | ') }}\nPayload: {{ JSON.stringify($json.payload) }}\nReturn ONLY raw JSON."
+            }
+          ]
+        },
+        "simplify": true
+      },
+      "id": "849ad7af-bf27-4c56-98db-a34c19b0314b",
+      "name": "AI Repair JSON",
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        3800,
+        -600
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "INSERT_HERE_YOUR_PERPLEXITY_CREDENTIAL_ID",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sanitizeAndParseJson(raw) {\n  let str = String(raw || '').replace(/```json\\s*/gi, '').replace(/```\\s*/gi, '').replace(/\\[\\d+\\]/g, '').trim();\n  const start = str.indexOf('{');\n  const end = str.lastIndexOf('}');\n  if (start === -1 || end === -1 || end <= start) throw new Error('No JSON object found');\n  str = str.slice(start, end + 1).replace(/,\\s*([}\\]])/g, '$1');\n  return JSON.parse(str);\n}\nconst inputJson = $input.first().json;\nconst raw = String(inputJson?.message?.content ?? inputJson?.message ?? inputJson?.text ?? '').trim();\nconst product = $('Take 1 Only').first().json;\ntry {\n  const review = sanitizeAndParseJson(raw);\n  review.id = String(product.id || '');\n  review.productName = product.productName || review.productName || '';\n  review.category = product.category || review.category || '';\n  review.slug = (product.productName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');\n  review.homepageUrl = review.homepageUrl || product.homepageUrl || '';\n  review.affiliateLink = review.affiliateLink || review.homepageUrl || product.homepageUrl || '';\n  review.dateUpdated = new Date().toISOString().slice(0, 10);\n  if (typeof review.score === 'string') review.score = parseFloat(review.score);\n  if (Number.isNaN(review.score)) review.score = 0;\n  if (typeof review.mtdReady !== 'boolean') review.mtdReady = String(review.mtdReady).toLowerCase() === 'true';\n  return [{ json: { parseOk: true, rawWriterSnippet: raw.slice(0, 2000), ...review } }];\n} catch (e) {\n  return [{ json: { parseOk: false, id: String(product.id || ''), productName: product.productName || '', slug: (product.productName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), parseError: e.message, rawWriterSnippet: raw.slice(0, 2000) } }];\n}"
+      },
+      "id": "b7947948-077e-4cf0-a787-d4caedb80d23",
+      "name": "Extract Repair JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.parseOk }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "version": 2
+          }
+        }
+      },
+      "id": "f25110e3-b6c7-45f0-bfba-62cbabf5b45e",
+      "name": "Repair Parse OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4200,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst errors = [];\nconst wordCount = (s) => String(s || '').trim().split(/\\s+/).filter(Boolean).length;\nconst wc = wordCount(item.detailedReview);\nif (!item.id) errors.push('Missing id');\nif (!item.productName) errors.push('Missing productName');\nif (!item.slug) errors.push('Missing slug');\nif (typeof item.score !== 'number' || Number.isNaN(item.score) || item.score < 0 || item.score > 10) errors.push(`Invalid score: ${item.score}`);\nif (!item.summary || item.summary.trim().length < 20) errors.push('Summary too short');\nif (!item.detailedReview || wc < 350) errors.push(`Detailed review too short (${wc})`);\nif (!Array.isArray(item.pros) || item.pros.length < 3) errors.push('Need >=3 pros');\nif (!Array.isArray(item.cons) || item.cons.length < 2) errors.push('Need >=2 cons');\nif (!Array.isArray(item.pricingTable) || item.pricingTable.length < 1) errors.push('pricingTable missing');\nif (!item.homepageUrl || !/^https?:\\/\\//i.test(item.homepageUrl)) errors.push('Invalid homepageUrl');\nif (!item.affiliateLink || !/^https?:\\/\\//i.test(item.affiliateLink)) errors.push('Invalid affiliateLink');\nif (item.verdict && !['YES','NO','MAYBE'].includes(String(item.verdict).toUpperCase())) errors.push('Invalid verdict');\nif (item.scoreBreakdown) {\n  const keys = ['easeOfUse','valueForMoney','ukFit','supportQuality','featureDepth'];\n  for (const k of keys) {\n    const n = Number(item.scoreBreakdown[k]);\n    if (!Number.isFinite(n) || n < 0 || n > 10) errors.push(`Invalid scoreBreakdown.${k}`);\n  }\n}\nif (item.userQuotes && (!Array.isArray(item.userQuotes) || item.userQuotes.some(q => !q.platform || !q.quote))) errors.push('Invalid userQuotes');\nif (item.reviewSignals && (!Array.isArray(item.reviewSignals) || item.reviewSignals.some(s => !s.platform || !s.takeaway))) errors.push('Invalid reviewSignals');\nreturn [{ json: { ok: errors.length === 0, errors, payload: { ...item, wordCount: wc } } }];"
+      },
+      "id": "4aabf6b8-53c2-455d-96d1-5b2e34592df8",
+      "name": "Repair Validate Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        -680
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "version": 2
+          }
+        }
+      },
+      "id": "5830546b-04dd-4e39-8114-a2331ff5d586",
+      "name": "Repair Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4600,
+        -680
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "INSERT_HERE_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.payload.id }}",
+            "status": "validation_failed",
+            "validationErrors": "={{ $json.errors.join(' | ') }}",
+            "rawWriterSnippet": "={{ JSON.stringify($json.payload).slice(0, 2000) }}",
+            "lastNode": "validate_review"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        }
+      },
+      "id": "7378a098-6329-4870-98c7-f9a6fae70b60",
+      "name": "Mark Validation Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4800,
+        -520
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "INSERT_HERE_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "INSERT_HERE_YOUR_PUSH_URL_OR_KEEP_DEFAULT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "INSERT_HERE_YOUR_WEBSITE_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}"
+      },
+      "id": "f0e8a653-7941-4567-b6ac-794b0ca4e2fc",
+      "name": "Push Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4800,
+        -800
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "INSERT_HERE_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.payload.id }}",
+            "status": "done",
+            "publishedAt": "={{ $now.format('yyyy-MM-dd HH:mm:ss') }}",
+            "error": "",
+            "parseError": "",
+            "validationErrors": "",
+            "score": "={{ $json.payload.score }}",
+            "wordCount": "={{ $json.payload.wordCount }}",
+            "slug": "={{ $json.payload.slug }}",
+            "lastNode": "push_review"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        }
+      },
+      "id": "e183f33b-795c-4169-b739-bc23ef58b476",
+      "name": "Mark Done",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5000,
+        -800
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "INSERT_HERE_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Day at 9am": {
+      "main": [
+        [
+          {
+            "node": "Get Next Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Next Product": {
+      "main": [
+        [
+          {
+            "node": "Take 1 Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take 1 Only": {
+      "main": [
+        [
+          {
+            "node": "Has Product?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Product?": {
+      "main": [
+        [
+          {
+            "node": "Mark Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Mark Processing": {
+      "main": [
+        [
+          {
+            "node": "P1: Features & Audience",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1: Features & Audience": {
+      "main": [
+        [
+          {
+            "node": "P2: Pricing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P2: Pricing": {
+      "main": [
+        [
+          {
+            "node": "P3: User Reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P3: User Reviews": {
+      "main": [
+        [
+          {
+            "node": "P4: UK Compliance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P4: UK Compliance": {
+      "main": [
+        [
+          {
+            "node": "Assemble Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Research": {
+      "main": [
+        [
+          {
+            "node": "Validate Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Research": {
+      "main": [
+        [
+          {
+            "node": "Research OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research OK?": {
+      "main": [
+        [
+          {
+            "node": "AI Writer (Stefan)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Research Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Writer (Stefan)": {
+      "main": [
+        [
+          {
+            "node": "Extract Review JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Review JSON": {
+      "main": [
+        [
+          {
+            "node": "Parse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse OK?": {
+      "main": [
+        [
+          {
+            "node": "Validate Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Parse Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Review": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Push Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Repair JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push Review": {
+      "main": [
+        [
+          {
+            "node": "Mark Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Repair JSON": {
+      "main": [
+        [
+          {
+            "node": "Extract Repair JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Repair JSON": {
+      "main": [
+        [
+          {
+            "node": "Repair Parse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Repair Parse OK?": {
+      "main": [
+        [
+          {
+            "node": "Repair Validate Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Parse Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Repair Validate Review": {
+      "main": [
+        [
+          {
+            "node": "Repair Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Repair Valid?": {
+      "main": [
+        [
+          {
+            "node": "Push Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Validation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
