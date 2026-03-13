@@ -189,6 +189,24 @@ function normalizeVerdict(value: unknown): Review['verdict'] | undefined {
   return undefined;
 }
 
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => stripUndefinedDeep(item))
+      .filter((item) => item !== undefined) as T;
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, entryValue]) => entryValue !== undefined)
+        .map(([entryKey, entryValue]) => [entryKey, stripUndefinedDeep(entryValue)])
+    ) as T;
+  }
+
+  return value;
+}
+
 function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } | { ok: false; error: string } {
   if (!body || typeof body !== 'object') {
     return { ok: false, error: 'Body must be a JSON object' };
