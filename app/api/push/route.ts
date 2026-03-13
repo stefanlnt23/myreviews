@@ -1,92 +1,128 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { upsertReview, deleteReview } from '../../../lib/db/reviews';
-import { Review } from '../../../types';
+import { Review, ReviewImage } from '../../../types';
 
-// Validate API Key
 function validateApiKey(req: NextRequest) {
   const apiKey = req.headers.get('x-api-key');
   return apiKey === process.env.API_SECRET;
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string' && item.trim().length > 0);
+}
+
+function normalizeImages(value: unknown): (string | ReviewImage)[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const normalized = value
+    .map((entry) => {
+      if (typeof entry === 'string' && entry.trim()) return entry.trim();
+      if (entry && typeof entry === 'object' && 'src' in entry && typeof entry.src === 'string' && entry.src.trim()) {
+        const obj = entry as { src: string; alt?: string; caption?: string };
+        return {
+          src: obj.src.trim(),
+          alt: typeof obj.alt === 'string' ? obj.alt.trim() : undefined,
+          caption: typeof obj.caption === 'string' ? obj.caption.trim() : undefined,
+        } as ReviewImage;
+      }
+      return null;
+    })
+    .filter(Boolean) as (string | ReviewImage)[];
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function validatePayload(body: unknown): { ok: true; payload: Partial<Review> } | { ok: false; error: string } {
+  if (!body || typeof body !== 'object') {
+    return { ok: false, error: 'Body must be a JSON object' };
+  }
+
+  const payload = body as Record<string, unknown>;
+  const category = payload.category;
+  const score = typeof payload.score === 'number' ? payload.score : Number(payload.score);
+
+  const allowedCategories: Review['category'][] = [
+    'ACCOUNTING',
+    'INVOICING',
+    'WEBSITE BUILDER',
+    'PAYMENTS',
+    'JOB MANAGEMENT',
+    'INSURANCE',
+  ];
+
+  if (!isNonEmptyString(payload.productName)) return { ok: false, error: 'Missing or invalid productName' };
+  if (!isNonEmptyString(payload.slug)) return { ok: false, error: 'Missing or invalid slug' };
+  if (typeof category !== 'string' || !allowedCategories.includes(category as Review['category'])) {
+    return { ok: false, error: 'Missing or invalid category' };
+  }
+  if (!Number.isFinite(score) || score < 0 || score > 10) return { ok: false, error: 'Missing or invalid score' };
+  if (!isStringArray(payload.pros)) return { ok: false, error: 'Missing or invalid pros' };
+  if (!isStringArray(payload.cons)) return { ok: false, error: 'Missing or invalid cons' };
+  if (!isNonEmptyString(payload.summary)) return { ok: false, error: 'Missing or invalid summary' };
+  if (!isNonEmptyString(payload.detailedReview)) return { ok: false, error: 'Missing or invalid detailedReview' };
+  if (!isNonEmptyString(payload.affiliateLink)) return { ok: false, error: 'Missing or invalid affiliateLink' };
+
+  const normalizedImages = normalizeImages(payload.images);
+
+  const reviewData: Partial<Review> = {
+    productName: payload.productName.trim(),
+    slug: payload.slug.trim(),
+    category: category as Review['category'],
+    score,
+    pros: payload.pros,
+    cons: payload.cons,
+    summary: payload.summary.trim(),
+    detailedReview: payload.detailedReview.trim(),
+    affiliateLink: payload.affiliateLink.trim(),
+    mtdReady: payload.mtdReady === true,
+    affiliateDisclosure: isNonEmptyString(payload.affiliateDisclosure) ? payload.affiliateDisclosure.trim() : undefined,
+    pricingTable: Array.isArray(payload.pricingTable) ? (payload.pricingTable as Review['pricingTable']) : undefined,
+    youtubeEmbed: isNonEmptyString(payload.youtubeEmbed) ? payload.youtubeEmbed.trim() : undefined,
+    expertName: isNonEmptyString(payload.expertName) ? payload.expertName.trim() : undefined,
+    expertTitle: isNonEmptyString(payload.expertTitle) ? payload.expertTitle.trim() : undefined,
+    dateUpdated: isNonEmptyString(payload.dateUpdated) ? payload.dateUpdated.trim() : undefined,
+    images: normalizedImages,
+    youtubeTitle: isNonEmptyString(payload.youtubeTitle) ? payload.youtubeTitle.trim() : undefined,
+    expertQuote: isNonEmptyString(payload.expertQuote) ? payload.expertQuote.trim() : undefined,
+    faqItems: Array.isArray(payload.faqItems) ? (payload.faqItems as Review['faqItems']) : undefined,
+    alternatives: Array.isArray(payload.alternatives) ? (payload.alternatives as Review['alternatives']) : undefined,
+    lastTestedVersion: isNonEmptyString(payload.lastTestedVersion) ? payload.lastTestedVersion.trim() : undefined,
+    tagline: isNonEmptyString(payload.tagline) ? payload.tagline.trim() : undefined,
+    badge: isNonEmptyString(payload.badge) ? payload.badge.trim() : undefined,
+    isNew: payload.isNew === true,
+  };
+
+  return { ok: true, payload: reviewData };
+}
+
 export async function POST(req: NextRequest) {
   if (!validateApiKey(req)) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const {
-      productName,
-      slug,
-      category,
-      score,
-      pros,
-      cons,
-      summary,
-      detailedReview,
-      affiliateLink,
-    } = body;
+    const validated = validatePayload(body);
 
-    // Validate required fields
-    if (
-      !productName ||
-      !slug ||
-      !category ||
-      score === undefined ||
-      !pros ||
-      !cons ||
-      !summary ||
-      !detailedReview ||
-      !affiliateLink
-    ) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    if (!validated.ok) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    // Prepare full payload
-    const rawReviewData: Partial<Review> = {
-      productName,
-      slug,
-      category,
-      score,
-      pros,
-      cons,
-      summary,
-      detailedReview,
-      affiliateLink,
-      mtdReady: body.mtdReady ?? false,
-      affiliateDisclosure: body.affiliateDisclosure,
-      pricingTable: body.pricingTable,
-      youtubeEmbed: body.youtubeEmbed,
-      expertName: body.expertName,
-      expertTitle: body.expertTitle,
-      dateUpdated: body.dateUpdated,
-      images: body.images,
-      youtubeTitle: body.youtubeTitle,
-      expertQuote: body.expertQuote,
-      faqItems: body.faqItems,
-      alternatives: body.alternatives,
-      lastTestedVersion: body.lastTestedVersion,
-      tagline: body.tagline,
-      badge: body.badge,
-      isNew: body.isNew ?? false,
-    };
-
-    // Remove undefined values to prevent Firestore errors
     const reviewData = Object.fromEntries(
-      Object.entries(rawReviewData).filter(([, v]) => v !== undefined)
-    ) as Partial<Review> as Review;
+      Object.entries(validated.payload).filter(([, v]) => v !== undefined)
+    ) as unknown as Partial<Review>;
 
-    await upsertReview(slug, reviewData);
+    await upsertReview(validated.payload.slug!, reviewData);
 
-    // Revalidate the homepage and the specific review page
     revalidatePath('/');
-    revalidatePath(`/review/${slug}`);
+    revalidatePath(`/review/${validated.payload.slug}`);
 
-    return NextResponse.json({ success: true, slug }, { status: 200 });
+    return NextResponse.json({ success: true, slug: validated.payload.slug }, { status: 200 });
   } catch (error) {
     console.error('Error processing POST /api/push:', error);
     return NextResponse.json(
@@ -98,7 +134,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   if (!validateApiKey(req)) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -115,7 +151,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    // Revalidate the homepage and the specific review page
     revalidatePath('/');
     revalidatePath(`/review/${slug}`);
 

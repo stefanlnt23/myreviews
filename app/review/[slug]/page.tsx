@@ -140,16 +140,25 @@ export default async function ReviewPage({ params }: { params: { slug: string } 
         {review.images && review.images.length > 0 && (
           <div className="mb-20 overflow-x-auto pb-4 snap-x">
             <div className="flex gap-6 min-w-max">
-              {review.images.map((img, i) => (
-                <img 
-                  key={i} 
-                  src={`/api/image-proxy?url=${encodeURIComponent(img)}`}
-                  alt={`${review.productName} screenshot ${i + 1}`} 
-                  className="h-64 md:h-80 w-auto rounded-[16px] border-[1.5px] border-[#e8e4de] object-cover snap-center bg-white shadow-md p-1"
-                  loading="lazy"
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                />
-              ))}
+              {review.images.map((img, i) => {
+                const imageUrl = typeof img === 'string' ? img : img.src;
+                const imageAlt = typeof img === 'string'
+                  ? `${review.productName} screenshot ${i + 1}`
+                  : img.alt || `${review.productName} screenshot ${i + 1}`;
+
+                if (!imageUrl) return null;
+
+                return (
+                  <img
+                    key={`${imageUrl}-${i}`}
+                    src={`/api/image-proxy?url=${encodeURIComponent(imageUrl)}`}
+                    alt={imageAlt}
+                    className="h-64 md:h-80 w-auto rounded-[16px] border-[1.5px] border-[#e8e4de] object-cover snap-center bg-white shadow-md p-1"
+                    loading="lazy"
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                  />
+                );
+              })}
             </div>
           </div>
         )}

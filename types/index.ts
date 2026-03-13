@@ -4,6 +4,12 @@ export interface PricingTier {
   bestFor: string;
 }
 
+export interface ReviewImage {
+  src: string;
+  alt?: string;
+  caption?: string;
+}
+
 export interface Review {
   productName: string;
   slug: string;
@@ -21,7 +27,7 @@ export interface Review {
   expertName?: string;
   expertTitle?: string;
   dateUpdated?: string;
-  images?: string[];
+  images?: (string | ReviewImage)[];
   youtubeTitle?: string;
   expertQuote?: string;
   faqItems?: { question: string; answer: string }[];
