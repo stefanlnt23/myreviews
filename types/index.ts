@@ -10,6 +10,38 @@ export interface ReviewImage {
   caption?: string;
 }
 
+export interface ReviewSignal {
+  platform: string;
+  rating?: string;
+  reviewCount?: string;
+  sentiment?: 'POSITIVE' | 'MIXED' | 'NEGATIVE';
+  takeaway: string;
+}
+
+export interface UserQuote {
+  platform: string;
+  quote: string;
+  url?: string;
+  author?: string;
+  rating?: string;
+  date?: string;
+  topicTag?: string;
+}
+
+export interface ScoreBreakdown {
+  easeOfUse: number;
+  valueForMoney: number;
+  ukFit: number;
+  supportQuality: number;
+  featureDepth: number;
+}
+
+export interface SourceAudit {
+  checkedAt: string;
+  sourcesCount: number;
+  confidence?: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
 export interface Review {
   productName: string;
   slug: string;
@@ -30,6 +62,14 @@ export interface Review {
   images?: (string | ReviewImage)[];
   youtubeTitle?: string;
   expertQuote?: string;
+  verdict?: "YES" | "NO" | "MAYBE";
+  verdictReason?: string;
+  reviewSignals?: ReviewSignal[];
+  userQuotes?: UserQuote[];
+  scoreBreakdown?: ScoreBreakdown;
+  whoItsFor?: string[];
+  notFor?: string[];
+  sourceAudit?: SourceAudit;
   faqItems?: { question: string; answer: string }[];
   alternatives?: { name: string; reason: string }[];
   lastTestedVersion?: string;
